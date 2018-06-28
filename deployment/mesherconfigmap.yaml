@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mesher-configmap
+data:
+  chassis.yaml: |
+    ---
+    cse:
+      credentials:
+        accessKey: UINZOXGKR7GQXBUVZGN0
+        secretKey: ISVRNd2n6nNDpV8HbMeIOW43BZ1rx9PrvE9P8If7
+      loadbalance:
+        strategyName: RoundRobin
+        retryEnabled: false
+        retryOnNext: 2
+        retryOnSame: 3
+        backoff:
+          kind: constant
+          minMs: 200
+          maxMs: 400
+      service:
+        registry:
+          type: servicecenter
+          scope: full
+          address: https://cse.cn-north-1.myhwclouds.com:443
+          refeshInterval : 30s
+          watch: true
+          tenant: default
+      protocols:
+        highway:
+          listenAddress: 0.0.0.0:9090
+          advertiseAddress: 0.0.0.0:8080
+          transport: tcp #optional 指定加载那个传输层
+        rest:
+          listenAddress: 0.0.0.0:8081
+          advertiseAddress: 0.0.0.0:8081
+          transport: tcp #optional 指定加载那个传输层
+      handler:
+        chain:
+          Provider:
+            default: bizkeeper-provider
+    ssl:
+      test.consumer.cipherPlugin:
+      test.consumer.verifyPeer:
+      test.consumer.verifyCN:
+      test.consumer.cipherSuits:
+      test.consumer.protocol:
+      test.consumer.caFile:
+      test.consumer.certFile: server.cer
+      test.consumer.keyFile:
+      test.consumer.certPwdFile: cert_pwd
+
+      registrator.Consumer.cipherPlugin: default
+      registrator.Consumer.verifyPeer: false
+      registrator.Consumer.cipherSuits: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+      registrator.Consumer.protocol: TLSv1.2
+      registrator.Consumer.caFile:
+      registrator.Consumer.certFile:
+      registrator.Consumer.keyFile:
+      registrator.Consumer.certPwdFile:
+
+      serviceDiscovery.Consumer.cipherPlugin: default
+      serviceDiscovery.Consumer.verifyPeer: false
+      serviceDiscovery.Consumer.cipherSuits: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+      serviceDiscovery.Consumer.protocol: TLSv1.2
+      serviceDiscovery.Consumer.caFile:
+      serviceDiscovery.Consumer.certFile:
+      serviceDiscovery.Consumer.keyFile:
+      serviceDiscovery.Consumer.certPwdFile:
+
+      contractDiscovery.Consumer.cipherPlugin: default
+      contractDiscovery.Consumer.verifyPeer: false
+      contractDiscovery.Consumer.cipherSuits: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+      contractDiscovery.Consumer.protocol: TLSv1.2
+      contractDiscovery.Consumer.caFile:
+      contractDiscovery.Consumer.certFile:
+      contractDiscovery.Consumer.keyFile:
+      contractDiscovery.Consumer.certPwdFile:

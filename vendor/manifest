@@ -1,0 +1,248 @@
+{
+	"version": 0,
+	"dependencies": [
+		{
+			"importpath": "github.com/Sirupsen/logrus",
+			"repository": "https://github.com/sirupsen/logrus",
+			"vcs": "git",
+			"revision": "d26492970760ca5d33129d2d799e34be5c4782eb",
+			"branch": "HEAD",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/howeyc/fsnotify",
+			"repository": "https://github.com/howeyc/fsnotify",
+			"vcs": "git",
+			"revision": "f0c08ee9c60704c1879025f2ae0ff3e000082c13",
+			"branch": "HEAD",
+			"notests": true
+		},
+		{
+			"importpath": "gopkg.in/yaml.v2",
+			"repository": "https://github.com/go-yaml/yaml",
+			"vcs": "git",
+			"revision": "a5b47d31c556af34a302ce5d659e6fea44d90de0",
+			"branch": "HEAD",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/ServiceComb/go-chassis",
+			"repository": "https://github.com/ServiceComb/go-chassis",
+			"vcs": "git",
+			"revision": "164ca0fcd787c8d024f4952f23ab4a1293543ed4",
+			"branch": "HEAD",
+			"notests": true
+		},
+		{
+			"importpath": "k8s.io/api",
+			"repository": "https://github.com/kubernetes/api",
+			"vcs": "git",
+			"revision": "acf347b865f29325eb61f4cd2df11e86e073a5ee",
+			"branch": "release-1.9",
+			"notests": true
+		},
+		{
+			"importpath": "k8s.io/apimachinery",
+			"repository": "https://github.com/kubernetes/apimachinery",
+			"vcs": "git",
+			"revision": "19e3f5aa3adca672c153d324e6b7d82ff8935f03",
+			"branch": "release-1.9",
+			"notests": true
+		},
+		{
+			"importpath": "k8s.io/kubernetes",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"vcs": "git",
+			"revision": "bee2d1505c4fe820744d26d41ecd3fdd4a3d6546",
+			"branch": "v1.9.4",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/golang/glog",
+			"repository": "https://github.com/golang/glog",
+			"vcs": "git",
+			"revision": "23def4e6c14b4da8ac2ed8007337bc5eb5007998",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/google/gofuzz",
+			"repository": "https://github.com/google/gofuzz",
+			"vcs": "git",
+			"revision": "24818f796faf91cd76ec7bddd72458fbced7a6c1",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/ghodss/yaml",
+			"repository": "https://github.com/ghodss/yaml",
+			"vcs": "git",
+			"revision": "0ca9ea5df5451ffdf184b4428c902747c2c11cd7",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/go-openapi/spec",
+			"repository": "https://github.com/go-openapi/spec",
+			"vcs": "git",
+			"revision": "d8000b5bfbd1147255710505a27c735b6b2ae2ac",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/gogo/protobuf",
+			"repository": "https://github.com/gogo/protobuf",
+			"vcs": "git",
+			"revision": "1adfc126b41513cc696b209667c8656ea7aac67c",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/json-iterator/go",
+			"repository": "https://github.com/json-iterator/go",
+			"vcs": "git",
+			"revision": "3353055b2a1a5ae1b6a8dfde887a524e7088f3a2",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/spf13/pflag",
+			"repository": "https://github.com/spf13/pflag",
+			"vcs": "git",
+			"revision": "e57e3eeb33f795204c1ca35f56c44f83227c6e66",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "k8s.io/apiextensions-apiserver",
+			"repository": "https://github.com/kubernetes/apiextensions-apiserver",
+			"vcs": "git",
+			"revision": "9f7d28e4a66fed426627a89e57d82602a3d33a12",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "k8s.io/apiserver",
+			"repository": "https://github.com/kubernetes/apiserver",
+			"vcs": "git",
+			"revision": "8e2fdf029740242e7ff156baa1107b07e403e241",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "k8s.io/kube-openapi",
+			"repository": "https://github.com/kubernetes/kube-openapi",
+			"vcs": "git",
+			"revision": "50ae88d24ede7b8bad68e23c805b5d3da5c8abaf",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/emicklei/go-restful",
+			"repository": "https://github.com/emicklei/go-restful",
+			"vcs": "git",
+			"revision": "26b41036311f2da8242db402557a0dbd09dc83da",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/go-openapi/jsonpointer",
+			"repository": "https://github.com/go-openapi/jsonpointer",
+			"vcs": "git",
+			"revision": "779f45308c19820f1a69e9a4cd965f496e0da10f",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/go-openapi/jsonreference",
+			"repository": "https://github.com/go-openapi/jsonreference",
+			"vcs": "git",
+			"revision": "36d33bfe519efae5632669801b180bf1a245da3b",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/go-openapi/swag",
+			"repository": "https://github.com/go-openapi/swag",
+			"vcs": "git",
+			"revision": "ceb469cb0fdf2d792f28d771bc05da6c606f55e5",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/modern-go/concurrent",
+			"repository": "https://github.com/modern-go/concurrent",
+			"vcs": "git",
+			"revision": "bacd9c7ef1dd9b15be4a9909b8ac7a4e313eec94",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/modern-go/reflect2",
+			"repository": "https://github.com/modern-go/reflect2",
+			"vcs": "git",
+			"revision": "1df9eeb2bb81f327b96228865c5687bc2194af3f",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/PuerkitoBio/purell",
+			"repository": "https://github.com/PuerkitoBio/purell",
+			"vcs": "git",
+			"revision": "0bcb03f4b4d0a9428594752bd2a3b9aa0a9d4bd4",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/mailru/easyjson",
+			"repository": "https://github.com/mailru/easyjson",
+			"vcs": "git",
+			"revision": "f594efddfa171111dc4349cd6e78e8f61dc7936f",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/PuerkitoBio/urlesc",
+			"repository": "https://github.com/PuerkitoBio/urlesc",
+			"vcs": "git",
+			"revision": "de5bf2ad457846296e2031421a34e2568e304e35",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "gopkg.in/inf.v0",
+			"repository": "https://github.com/go-inf/inf",
+			"vcs": "git",
+			"revision": "8237a9a5367b2a82f922b38d4b3676293e031763",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/net",
+			"repository": "https://github.com/golang/net",
+			"vcs": "git",
+			"revision": "e514e69ffb8bc3c76a71ae40de0118d794855992",
+			"branch": "HEAD",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/text",
+			"repository": "https://github.com/golang/text",
+			"vcs": "git",
+			"revision": "5cec4b58c438bd98288aeb248bab2c1840713d21",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/ServiceComb/paas-lager",
+			"repository": "https://github.com/ServiceComb/paas-lager",
+			"vcs": "git",
+			"revision": "b1610f32d9985e776d828524a618079ca7a3b7e9",
+			"branch": "HEAD",
+			"notests": true,
+			"allfiles": true
+		}
+	]
+}
+
+
