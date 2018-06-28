@@ -1,15 +1,15 @@
 package main
 
 import (
+	"context"
 	"flag"
-	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/go-chassis/sidecar-injector/webhook"
-	"github.com/go-chassis/sidecar-injector/loger"
 	"os"
 	"os/signal"
 	"syscall"
-	"context"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/go-chassis/sidecar-injector/loger"
+	"github.com/go-chassis/sidecar-injector/webhook"
 )
 
 func main() {
@@ -33,8 +33,6 @@ func main() {
 	stop := make(chan struct{})
 	go wh.Run(stop, parms)
 
-	fmt.Println("Seventh*************%%%%%%%%%%%%")
-	// listening OS shutdown singal
 	signalC := make(chan os.Signal, 1)
 	signal.Notify(signalC, syscall.SIGINT, syscall.SIGTERM)
 	<-signalC
