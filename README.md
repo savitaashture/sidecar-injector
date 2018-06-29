@@ -17,7 +17,7 @@ The output should be:
 admissionregistration.k8s.io/v1beta1
 ```
 
-##OR
+OR
 
 ```
 ps -ef | grep kube-apiserver | grep admission-control
