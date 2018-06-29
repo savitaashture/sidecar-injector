@@ -2,7 +2,7 @@
 set -e
 set -x
 
-#gvt restore
+gvt restore
 
 appname="sidecar-injector"
 
