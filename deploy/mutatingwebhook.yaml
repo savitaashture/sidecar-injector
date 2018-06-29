@@ -9,7 +9,7 @@ webhooks:
     clientConfig:
       service:
         name: sidecar-injector-webhook-mesher-svc
-        namespace: mutation
+        namespace: chassis
         path: "/webhookmutation"
       caBundle: ${CA_BUNDLE}
     rules:

@@ -27,6 +27,12 @@ Output should be:
 --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota
 ```
 
+## Quick Start
+
+```
+bash -x install.sh
+```
+
 ## Build
 
 1. Setup dependency
@@ -44,34 +50,34 @@ go get -u github.com/FiloSottile/gvt
 2. bash -x build.sh
 ```
 
-## Deploy
+## Install
 
 ```
-bash -x deploy.sh
+bash -x install.sh
 ```
 
 ## Verify
 
 1. The sidecar injector webhook should be running
 ```
-[root@mstnode ~]# kubectl get pods -n mutation
+[root@mstnode ~]# kubectl get pods -n chassis
 NAME                                                          READY     STATUS    RESTARTS   AGE
 sidecar-injector-webhook-mesher-deployment-8576646db8-x6f56   1/1       Running   0          20s
 
-[root@mstnode ~]# kubectl get deployment -n mutation
+[root@mstnode ~]# kubectl get deployment -n chassis
 NAME                                         DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
 sidecar-injector-webhook-mesher-deployment   1         1         1            1           1m
 ```
 
-2. Label the mutation namespace with `sidecar-injector=enabled`
+2. Label the chassis namespace with `sidecar-injector=enabled`
 ```
-kubectl label namespace mutation sidecar-injector=enabled
+kubectl label namespace chassis sidecar-injector=enabled
 [root@mstnode ~]# kubectl get namespace -L sidecar-injector
 NAME          STATUS    AGE       SIDECAR-INJECTOR
 default       Active    18h
 kube-public   Active    18h
 kube-system   Active    18h
-mutation      Active    3m        enabled
+chassis      Active    3m        enabled
 ```
 
 3. Deploy an app in Kubernetes cluster, take `client` app as an example
@@ -82,7 +88,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: client
-  namespace: mutation
+  namespace: chassis
   annotations:
     sidecar-injector-mesher.io/inject: "yes"
   labels:
@@ -104,12 +110,12 @@ EOF
 
 4. Verify sidecar container injected
 ```
-[root@mstnode ~]# kubectl get pods -n mutation
+[root@mstnode ~]# kubectl get pods -n chassis
 NAME                                                          READY     STATUS    RESTARTS   AGE
 client                                                        2/2       Running   0          12s
 ```
 
 ## Clean
 ```
-bash -x clean.sh
+bash -x uninstall.sh
 ```

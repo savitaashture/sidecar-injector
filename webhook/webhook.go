@@ -32,11 +32,6 @@ var (
 	defaulter = runtime.ObjectDefaulter(runtimeScheme)
 )
 
-var ignoredNamespaces = []string {
-	metav1.NamespaceSystem,
-	metav1.NamespacePublic,
-}
-
 const (
 	webhookInjectKey = "sidecar-injector-mesher.io/inject"
 	webhookStatusKey = "sidecar-injector-mesher.io/status"
@@ -66,7 +61,7 @@ type Config struct {
 }
 
 type operation struct {
-	Op    string      `json:"op"`
+	Operation    string      `json:"op"`
 	Path  string      `json:"path"`
 	Value interface{} `json:"value,omitempty"`
 }
@@ -147,136 +142,128 @@ func loadConfig(cfgFile string) (*Config, error) {
 	return &cfg, nil
 }
 
-func mutationRequired(ignoredList []string, metadata *metav1.ObjectMeta) bool {
-	// ignore special kubernete system namespaces
-	for _, namespace := range ignoredList {
-		if metadata.Namespace == namespace {
-			log.Infof("Skip mutation for %v for it' in special namespace:%v", metadata.Name, metadata.Namespace)
-			return false
-		}
-	}
-
-	annotations := metadata.GetAnnotations()
+func requiredMutation(metaData *metav1.ObjectMeta) bool {
+	annotations := metaData.GetAnnotations()
 	if annotations == nil {
 		annotations = map[string]string{}
 	}
 
 	status := annotations[webhookStatusKey]
 	
-	// determine whether to perform mutation based on annotation for the target resource
-	var required bool
+	// determine whether to perform mutation based on annotation for the destination resource
+	var mRequired bool
 	if strings.ToLower(status) == "injected" {
-		required = false
+		mRequired = false
 	} else {
 		switch strings.ToLower(annotations[webhookInjectKey]) {
 		default:
-			required = false
-		case "y", "yes", "true", "on":
-			required = true
+			mRequired = false
+		case "y", "yes":
+			mRequired = true
 		}
 	}
 	
-	log.Infof("Mutation policy for %v/%v: status: %q required:%v", metadata.Namespace, metadata.Name, status, required)
-	return required
+	log.Infof("Mutation policy for %v/%v: status: %q required:%v", metaData.Namespace, metaData.Name, status, mRequired)
+	return mRequired
 }
 
-func addContainer(target, added []corev1.Container, basePath string) (patch []operation) {
-	first := len(target) == 0
-	var value interface{}
-	for _, add := range added {
-		value = add
-		path := basePath
-		if first {
-			first = false
-			value = []corev1.Container{add}
+func insertContainer(dest, add []corev1.Container, path string) (p []operation) {
+	f := len(dest) == 0
+	var val interface{}
+	for _, add := range add {
+		val = add
+		path := path
+		if f {
+			f = false
+			val = []corev1.Container{add}
 		} else {
 			path = path + "/-"
 		}
-		patch = append(patch, operation {
-			Op:    "add",
+		p = append(p, operation {
+			Operation:    "add",
 			Path:  path,
-			Value: value,
+			Value: val,
 		})
 	}
-	return patch
+	return p
 }
 
-func addVolume(target, added []corev1.Volume, basePath string) (patch []operation) {
-	first := len(target) == 0
-	var value interface{}
-	for _, add := range added {
-		value = add
-		path := basePath
-		if first {
-			first = false
-			value = []corev1.Volume{add}
+func insertVolume(dest, add []corev1.Volume, path string) (p []operation) {
+	f := len(dest) == 0
+	var val interface{}
+	for _, add := range add {
+		val = add
+		path := path
+		if f {
+			f = false
+			val = []corev1.Volume{add}
 		} else {
 			path = path + "/-"
 		}
-		patch = append(patch, operation {
-			Op:    "add",
+		p = append(p, operation {
+			Operation:    "add",
 			Path:  path,
-			Value: value,
+			Value: val,
 		})
 	}
-	return patch
+	return p
 }
 
-func addImagePullSecrets(target, added []corev1.LocalObjectReference, basePath string) (patch []operation) {
-	first := len(target) == 0
-	var value interface{}
-	for _, add := range added {
-		value = add
-		path := basePath
-		if first {
-			first = false
-			value = []corev1.LocalObjectReference{add}
+func insertImagePullSecrets(dest, add []corev1.LocalObjectReference, path string) (p []operation) {
+	f := len(dest) == 0
+	var val interface{}
+	for _, add := range add {
+		val = add
+		path := path
+		if f {
+			f = false
+			val = []corev1.LocalObjectReference{add}
 		} else {
 			path = path + "/-"
 		}
-		patch = append(patch, operation {
-			Op:    "add",
+		p = append(p, operation {
+			Operation:    "add",
 			Path:  path,
-			Value: value,
+			Value: val,
 		})
 	}
-	return patch
+	return p
 }
 
 
-func updateAnnotation(target map[string]string, added map[string]string) (patch []operation) {
-	for key, value := range added {
-		if target == nil || target[key] == "" {
-			target = map[string]string{}
-			patch = append(patch, operation {
-				Op:   "add",
+func annotationUpdate(dest map[string]string, add map[string]string) (p []operation) {
+	for key, value := range add {
+		if dest == nil || dest[key] == "" {
+			dest = map[string]string{}
+			p = append(p, operation {
+				Operation:   "add",
 				Path: "/metadata/annotations",
 				Value: map[string]string{
 					key: value,
 				},
 			})
 		} else {
-			patch = append(patch, operation {
-				Op:    "replace",
+			p = append(p, operation {
+				Operation:    "replace",
 				Path:  "/metadata/annotations/" + key,
 				Value: value,
 			})
 		}
 	}
-	return patch
+	return p
 }
 
 // create mutation patch for resoures
-func createPatch(pod *corev1.Pod, sidecarConfig *Config, annotations map[string]string) ([]byte, error) {
-	var patch []operation
+func createpatch(pod *corev1.Pod, sidecarConfig *Config, annotations map[string]string) ([]byte, error) {
+	var p []operation
 	
-	patch = append(patch, addContainer(pod.Spec.Containers, sidecarConfig.Containers, "/spec/containers")...)
-	patch = append(patch, addVolume(pod.Spec.Volumes, sidecarConfig.Volumes, "/spec/volumes")...)
-	patch = append(patch, addImagePullSecrets(pod.Spec.ImagePullSecrets, sidecarConfig.ImagePullSecret, "/spec/imagePullSecrets")...)
+	p = append(p, insertContainer(pod.Spec.Containers, sidecarConfig.Containers, "/spec/containers")...)
+	p = append(p, insertVolume(pod.Spec.Volumes, sidecarConfig.Volumes, "/spec/volumes")...)
+	p = append(p, insertImagePullSecrets(pod.Spec.ImagePullSecrets, sidecarConfig.ImagePullSecret, "/spec/imagePullSecrets")...)
 
-	patch = append(patch, updateAnnotation(pod.Annotations, annotations)...)
+	p = append(p, annotationUpdate(pod.Annotations, annotations)...)
 
-	return json.Marshal(patch)
+	return json.Marshal(p)
 }
 
 // main mutation process
@@ -296,7 +283,7 @@ func (wh *WebHookServer) mutation(ar *v1beta1.AdmissionReview) *v1beta1.Admissio
 		req.Kind, req.Namespace, req.Name, pod.Name, req.UID, req.Operation, req.UserInfo)
 	
 	// determine whether to perform mutation
-	if !mutationRequired(ignoredNamespaces, &pod.ObjectMeta) {
+	if !requiredMutation(&pod.ObjectMeta) {
 		log.Infof("Skipping mutation for %s/%s due to policy check", pod.Namespace, pod.Name)
 		return &v1beta1.AdmissionResponse {
 			Allowed: true, 
@@ -306,7 +293,7 @@ func (wh *WebHookServer) mutation(ar *v1beta1.AdmissionReview) *v1beta1.Admissio
 	// Workaround: https://github.com/kubernetes/kubernetes/issues/57982
 	applyDefaultsWorkaround(wh.SidecarConfig.Containers, wh.SidecarConfig.Volumes, wh.SidecarConfig.ImagePullSecret)
 	annotations := map[string]string{webhookStatusKey: "injected"}
-	patchBytes, err := createPatch(&pod, wh.SidecarConfig, annotations)
+	patch, err := createpatch(&pod, wh.SidecarConfig, annotations)
 	if err != nil {
 		return &v1beta1.AdmissionResponse {
 			Result: &metav1.Status {
@@ -315,10 +302,10 @@ func (wh *WebHookServer) mutation(ar *v1beta1.AdmissionReview) *v1beta1.Admissio
 		}
 	}
 	
-	log.Infof("Response %v\n", string(patchBytes))
+	log.Infof("Response %v\n", string(patch))
 	return &v1beta1.AdmissionResponse {
 		Allowed: true,
-		Patch:   patchBytes,
+		Patch:   patch,
 		PatchType: func() *v1beta1.PatchType {
 			pt := v1beta1.PatchTypeJSONPatch
 			return &pt

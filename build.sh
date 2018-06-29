@@ -3,6 +3,7 @@ set -e
 set -x
 
 gvt restore
+rm -rf vendor/k8s.io/apiextensions-apiserver/vendor/k8s.io/apiserver/pkg/util/feature/
 
 appname="sidecar-injector"
 
