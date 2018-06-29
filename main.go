@@ -1,15 +1,15 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"os"
 	"os/signal"
 	"syscall"
+	"context"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/go-chassis/sidecar-injector/loger"
 	"github.com/go-chassis/sidecar-injector/webhook"
+	"github.com/go-chassis/sidecar-injector/loger"
 )
 
 func main() {

@@ -4,11 +4,11 @@ import (
 	"path/filepath"
 	"sync"
 	"os"
+	"fmt"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/ServiceComb/go-chassis/core/lager"
-	"fmt"
-	"time"
 )
 
 var (
@@ -29,9 +29,7 @@ const (
 
 // Initialize function will initialize the log file and start the log rotation
 func Initialize() {
-	fmt.Println("Third******")
 	fileName := filepath.Join(GetLogDir(), PaasLager)
-	fmt.Println("fourth******", fileName)
 
 	f, err := os.OpenFile(fileName, os.O_WRONLY | os.O_APPEND | os.O_CREATE, 0644)
 	Formatter := new(log.JSONFormatter)
@@ -50,14 +48,12 @@ func Initialize() {
 
 // initLogRotate initialize log rotate
 func initLogRotate(logFilePath string) {
-	fmt.Println("Fifth******", logFilePath)
 		go func() {
 			for {
 				lager.LogRotate(filepath.Dir(logFilePath), LogRotateSize, LogBackupCount)
 				time.Sleep(30 * time.Second)
 			}
 		}()
-	fmt.Println("Sixtht")
 }
 
 

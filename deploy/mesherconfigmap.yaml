@@ -7,8 +7,8 @@ data:
     ---
     cse:
       credentials:
-        accessKey: UINZOXGKR7GQXBUVZGN0
-        secretKey: ISVRNd2n6nNDpV8HbMeIOW43BZ1rx9PrvE9P8If7
+        accessKey:
+        secretKey:
       loadbalance:
         strategyName: RoundRobin
         retryEnabled: false

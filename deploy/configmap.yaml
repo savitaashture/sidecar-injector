@@ -6,7 +6,7 @@ data:
   sidecarconfig.yaml: |
     containers:
       - name: sidecar-mesher
-        image: mesher:aksk
+        image: xiaoliang/mesher
         imagePullPolicy: Always
         ports:
           - containerPort: 30101

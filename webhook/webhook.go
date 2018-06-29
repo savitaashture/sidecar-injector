@@ -1,18 +1,16 @@
 package webhook
 
 import (
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"path/filepath"
 	"strings"
 	"sync"
+	"path/filepath"
 	"time"
+	"crypto/tls"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/howeyc/fsnotify"
 	"gopkg.in/yaml.v2"
 	"k8s.io/api/admission/v1beta1"
 	admissionregistration "k8s.io/api/admissionregistration/v1beta1"
@@ -21,6 +19,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/kubernetes/pkg/apis/core/v1"
+	log "github.com/Sirupsen/logrus"
+	"github.com/howeyc/fsnotify"
 )
 
 var (
@@ -32,7 +32,7 @@ var (
 	defaulter = runtime.ObjectDefaulter(runtimeScheme)
 )
 
-var ignoredNamespaces = []string{
+var ignoredNamespaces = []string {
 	metav1.NamespaceSystem,
 	metav1.NamespacePublic,
 }
@@ -43,25 +43,25 @@ const (
 )
 
 type WebHookServer struct {
-	SidecarConfig *Config
-	Server        *http.Server
-	Watch         *fsnotify.Watcher
-	Lock          sync.RWMutex
+	SidecarConfig    *Config
+	Server           *http.Server
+	Watch *fsnotify.Watcher
+	Lock sync.RWMutex
 }
 
 // Webhook Server parameters
 type WebHookParameters struct {
-	Port                int
-	CertFile            string
-	KeyFile             string
-	SidecarConfigFile   string
+	Port int
+	CertFile string
+	KeyFile string
+	SidecarConfigFile string
 	HealthCheckInterval time.Duration
-	HealthCheckFile     string
+	HealthCheckFile string
 }
 
 type Config struct {
-	Containers      []corev1.Container            `yaml:"containers"`
-	Volumes         []corev1.Volume               `yaml:"volumes"`
+	Containers  []corev1.Container  `yaml:"containers"`
+	Volumes     []corev1.Volume     `yaml:"volumes"`
 	ImagePullSecret []corev1.LocalObjectReference `yaml:"imagePullSecrets"`
 }
 
@@ -78,7 +78,7 @@ func init() {
 	_ = v1.AddToScheme(runtimeScheme)
 }
 
-func NewWebhook(p WebHookParameters) (*WebHookServer, error) {
+func NewWebhook(p WebHookParameters) (*WebHookServer, error){
 	sidecarConfig, err := loadConfig(p.SidecarConfigFile)
 	if err != nil {
 		log.Errorf("Filed to load configuration: %v", err)
@@ -97,7 +97,7 @@ func NewWebhook(p WebHookParameters) (*WebHookServer, error) {
 		return nil, err
 	}
 
-	for _, file := range []string{p.SidecarConfigFile, p.CertFile, p.KeyFile} {
+	for _, file := range []string{p.SidecarConfigFile, p.CertFile, p.KeyFile}{
 		watchFile, _ := filepath.Split(file)
 		if err := watcher.Watch(watchFile); err != nil {
 			log.Errorf("failed to watch the files: %v", err)
@@ -105,11 +105,11 @@ func NewWebhook(p WebHookParameters) (*WebHookServer, error) {
 		}
 	}
 
-	wh := &WebHookServer{
-		SidecarConfig: sidecarConfig,
-		Server: &http.Server{
-			Addr:      fmt.Sprintf(":%v", p.Port),
-			TLSConfig: &tls.Config{Certificates: []tls.Certificate{crt}},
+	wh := &WebHookServer {
+		SidecarConfig:    sidecarConfig,
+		Server:           &http.Server {
+			Addr:        fmt.Sprintf(":%v", p.Port),
+			TLSConfig:   &tls.Config{Certificates: []tls.Certificate{crt}},
 		},
 		Watch: watcher,
 	}
@@ -124,10 +124,10 @@ func NewWebhook(p WebHookParameters) (*WebHookServer, error) {
 
 // (https://github.com/kubernetes/kubernetes/issues/57982)
 func applyDefaultsWorkaround(containers []corev1.Container, volumes []corev1.Volume, secrets []corev1.LocalObjectReference) {
-	defaulter.Default(&corev1.Pod{
-		Spec: corev1.PodSpec{
-			Containers:       containers,
-			Volumes:          volumes,
+	defaulter.Default(&corev1.Pod {
+		Spec: corev1.PodSpec {
+			Containers:     containers,
+			Volumes:        volumes,
 			ImagePullSecrets: secrets,
 		},
 	})
@@ -143,7 +143,7 @@ func loadConfig(cfgFile string) (*Config, error) {
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return nil, err
 	}
-
+	
 	return &cfg, nil
 }
 
@@ -162,7 +162,7 @@ func mutationRequired(ignoredList []string, metadata *metav1.ObjectMeta) bool {
 	}
 
 	status := annotations[webhookStatusKey]
-
+	
 	// determine whether to perform mutation based on annotation for the target resource
 	var required bool
 	if strings.ToLower(status) == "injected" {
@@ -175,7 +175,7 @@ func mutationRequired(ignoredList []string, metadata *metav1.ObjectMeta) bool {
 			required = true
 		}
 	}
-
+	
 	log.Infof("Mutation policy for %v/%v: status: %q required:%v", metadata.Namespace, metadata.Name, status, required)
 	return required
 }
@@ -192,7 +192,7 @@ func addContainer(target, added []corev1.Container, basePath string) (patch []op
 		} else {
 			path = path + "/-"
 		}
-		patch = append(patch, operation{
+		patch = append(patch, operation {
 			Op:    "add",
 			Path:  path,
 			Value: value,
@@ -213,7 +213,7 @@ func addVolume(target, added []corev1.Volume, basePath string) (patch []operatio
 		} else {
 			path = path + "/-"
 		}
-		patch = append(patch, operation{
+		patch = append(patch, operation {
 			Op:    "add",
 			Path:  path,
 			Value: value,
@@ -234,7 +234,7 @@ func addImagePullSecrets(target, added []corev1.LocalObjectReference, basePath s
 		} else {
 			path = path + "/-"
 		}
-		patch = append(patch, operation{
+		patch = append(patch, operation {
 			Op:    "add",
 			Path:  path,
 			Value: value,
@@ -243,11 +243,12 @@ func addImagePullSecrets(target, added []corev1.LocalObjectReference, basePath s
 	return patch
 }
 
+
 func updateAnnotation(target map[string]string, added map[string]string) (patch []operation) {
 	for key, value := range added {
 		if target == nil || target[key] == "" {
 			target = map[string]string{}
-			patch = append(patch, operation{
+			patch = append(patch, operation {
 				Op:   "add",
 				Path: "/metadata/annotations",
 				Value: map[string]string{
@@ -255,7 +256,7 @@ func updateAnnotation(target map[string]string, added map[string]string) (patch 
 				},
 			})
 		} else {
-			patch = append(patch, operation{
+			patch = append(patch, operation {
 				Op:    "replace",
 				Path:  "/metadata/annotations/" + key,
 				Value: value,
@@ -268,7 +269,7 @@ func updateAnnotation(target map[string]string, added map[string]string) (patch 
 // create mutation patch for resoures
 func createPatch(pod *corev1.Pod, sidecarConfig *Config, annotations map[string]string) ([]byte, error) {
 	var patch []operation
-
+	
 	patch = append(patch, addContainer(pod.Spec.Containers, sidecarConfig.Containers, "/spec/containers")...)
 	patch = append(patch, addVolume(pod.Spec.Volumes, sidecarConfig.Volumes, "/spec/volumes")...)
 	patch = append(patch, addImagePullSecrets(pod.Spec.ImagePullSecrets, sidecarConfig.ImagePullSecret, "/spec/imagePullSecrets")...)
@@ -284,8 +285,8 @@ func (wh *WebHookServer) mutation(ar *v1beta1.AdmissionReview) *v1beta1.Admissio
 	var pod corev1.Pod
 	if err := json.Unmarshal(req.Object.Raw, &pod); err != nil {
 		log.Errorf("Could not unmarshal raw object: %v", err)
-		return &v1beta1.AdmissionResponse{
-			Result: &metav1.Status{
+		return &v1beta1.AdmissionResponse {
+			Result: &metav1.Status {
 				Message: err.Error(),
 			},
 		}
@@ -293,29 +294,29 @@ func (wh *WebHookServer) mutation(ar *v1beta1.AdmissionReview) *v1beta1.Admissio
 
 	log.Infof("AdmissionReview for Kind=%v, Namespace=%v Name=%v (%v) UID=%v patchOperation=%v UserInfo=%v",
 		req.Kind, req.Namespace, req.Name, pod.Name, req.UID, req.Operation, req.UserInfo)
-
+	
 	// determine whether to perform mutation
 	if !mutationRequired(ignoredNamespaces, &pod.ObjectMeta) {
 		log.Infof("Skipping mutation for %s/%s due to policy check", pod.Namespace, pod.Name)
-		return &v1beta1.AdmissionResponse{
-			Allowed: true,
+		return &v1beta1.AdmissionResponse {
+			Allowed: true, 
 		}
 	}
-
+	
 	// Workaround: https://github.com/kubernetes/kubernetes/issues/57982
 	applyDefaultsWorkaround(wh.SidecarConfig.Containers, wh.SidecarConfig.Volumes, wh.SidecarConfig.ImagePullSecret)
 	annotations := map[string]string{webhookStatusKey: "injected"}
 	patchBytes, err := createPatch(&pod, wh.SidecarConfig, annotations)
 	if err != nil {
-		return &v1beta1.AdmissionResponse{
-			Result: &metav1.Status{
+		return &v1beta1.AdmissionResponse {
+			Result: &metav1.Status {
 				Message: err.Error(),
 			},
 		}
 	}
-
+	
 	log.Infof("Response %v\n", string(patchBytes))
-	return &v1beta1.AdmissionResponse{
+	return &v1beta1.AdmissionResponse {
 		Allowed: true,
 		Patch:   patchBytes,
 		PatchType: func() *v1beta1.PatchType {
@@ -350,8 +351,8 @@ func (wh *WebHookServer) webhookMutation(w http.ResponseWriter, r *http.Request)
 	aRequest := v1beta1.AdmissionReview{}
 	if _, _, err := deserializer.Decode(body, nil, &aRequest); err != nil {
 		log.Errorf("Can't decode body: %v", err)
-		aResponse = &v1beta1.AdmissionResponse{
-			Result: &metav1.Status{
+		aResponse = &v1beta1.AdmissionResponse {
+			Result: &metav1.Status {
 				Message: err.Error(),
 			},
 		}
@@ -378,7 +379,8 @@ func (wh *WebHookServer) webhookMutation(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-func (wh *WebHookServer) Run(stop <-chan struct{}, p WebHookParameters) {
+
+func (wh *WebHookServer)Run(stop <-chan struct{}, p WebHookParameters){
 	var healthChan <-chan time.Time
 
 	if p.HealthCheckInterval != 0 && p.HealthCheckFile != "" {
@@ -396,10 +398,10 @@ func (wh *WebHookServer) Run(stop <-chan struct{}, p WebHookParameters) {
 	defer wh.Server.Close()
 	defer wh.Watch.Close()
 
-	var timerChan <-chan time.Time
+	var timerChan <- chan time.Time
 
-	for {
-		select {
+	for{
+		select{
 		case <-timerChan:
 			sidecarConfig, err := loadConfig(p.SidecarConfigFile)
 			if err != nil {
@@ -416,9 +418,9 @@ func (wh *WebHookServer) Run(stop <-chan struct{}, p WebHookParameters) {
 			wh.SidecarConfig = sidecarConfig
 			wh.Server.TLSConfig = &tls.Config{Certificates: []tls.Certificate{pair}}
 			wh.Lock.Unlock()
-		case event := <-wh.Watch.Event:
+		case event := <- wh.Watch.Event:
 			if event.IsModify() || event.IsCreate() {
-				timerChan = time.After(100 * time.Microsecond)
+				timerChan = time.After(100*time.Microsecond)
 			}
 		case err := <-wh.Watch.Error:
 			log.Errorf("watcher error: %v", err)
