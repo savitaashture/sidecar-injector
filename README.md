@@ -1,4 +1,5 @@
-# sidecar-injector
+# sidecar-injector  
+[![Build Status](https://travis-ci.org/go-chassis/sidecar-injector.svg?branch=master)](https://travis-ci.org/go-chassis/sidecar-injector)
 
 ## Need to update the license file
 
