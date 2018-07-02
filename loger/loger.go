@@ -1,18 +1,18 @@
 package loger
 
 import (
+	"fmt"
+	"os"
 	"path/filepath"
 	"sync"
-	"os"
-	"fmt"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/ServiceComb/go-chassis/core/lager"
+	log "github.com/Sirupsen/logrus"
 )
 
 var (
-	once sync.Once
+	once   sync.Once
 	logDir string
 )
 
@@ -31,33 +31,31 @@ const (
 func Initialize() {
 	fileName := filepath.Join(GetLogDir(), PaasLager)
 
-	f, err := os.OpenFile(fileName, os.O_WRONLY | os.O_APPEND | os.O_CREATE, 0644)
+	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	Formatter := new(log.JSONFormatter)
 	log.SetFormatter(Formatter)
 
 	if err != nil {
 		// Cannot open log file. Logging to stderr
 		fmt.Println(err)
-	}else{
+	} else {
 		log.SetOutput(f)
 	}
 
 	initLogRotate(fileName)
 }
 
-
 // initLogRotate initialize log rotate
 func initLogRotate(logFilePath string) {
-		go func() {
-			for {
-				lager.LogRotate(filepath.Dir(logFilePath), LogRotateSize, LogBackupCount)
-				time.Sleep(30 * time.Second)
-			}
-		}()
+	go func() {
+		for {
+			lager.LogRotate(filepath.Dir(logFilePath), LogRotateSize, LogBackupCount)
+			time.Sleep(30 * time.Second)
+		}
+	}()
 }
 
-
-//GetConfDir is a function used to get the logging directory
+//GetLogDir is a function used to get the logging directory
 func GetLogDir() string {
 	once.Do(initDir)
 	return logDir
