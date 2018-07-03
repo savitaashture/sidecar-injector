@@ -12,8 +12,8 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/ghodss/yaml"
 	"github.com/howeyc/fsnotify"
-	"gopkg.in/yaml.v2"
 	"k8s.io/api/admission/v1beta1"
 	admissionregistration "k8s.io/api/admissionregistration/v1beta1"
 	corev1 "k8s.io/api/core/v1"
