@@ -38,10 +38,7 @@ bash -x install.sh
 
 1. Setup dependency
 
-   The repo uses [gvt](https://github.com/FiloSottile/gvt) as the dependency management tool for its Go codebase. Install `gvt` by the following command:
-```
-go get -u github.com/FiloSottile/gvt
-```
+   The repo use [glide](https://github.com/Masterminds/glide) as the dependency management tool for its Go codebase. Install `gvt` by the following command:
 
 2. Build binary, image and push to docker hub
 
