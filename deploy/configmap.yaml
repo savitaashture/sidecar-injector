@@ -3,11 +3,16 @@ kind: ConfigMap
 metadata:
   name: sidecar-injector-webhook-mesher-configmap
 data:
-  sidecarconfig.yaml: |
+  sidecar_k8s_spec.yaml: |
     containers:
       - name: sidecar-mesher
         image: xiaoliang/mesher
         imagePullPolicy: Always
+        env:
+          - name: SERVICE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
         ports:
           - containerPort: 30101
         volumeMounts:

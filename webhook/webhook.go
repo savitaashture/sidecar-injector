@@ -33,8 +33,13 @@ var (
 )
 
 const (
-	webhookInjectKey = "sidecar-injector-mesher.io/inject"
-	webhookStatusKey = "sidecar-injector-mesher.io/status"
+	webhookInjectKey          = "sidecar.mesher.io/inject"
+	webhookStatusKey          = "sidecar.mesher.io/status"
+	servicePortsAnnotationKey = "sidecar.mesher.io/servicePorts"
+)
+
+const (
+	servicePorts = "SERVICE_PORTS"
 )
 
 //WebHookServer which has config contents
@@ -170,6 +175,21 @@ func requiredMutation(metaData *metav1.ObjectMeta) bool {
 	return mRequired
 }
 
+func getAnnotationsForServer(metaData *metav1.ObjectMeta, key string) string {
+	annotations := metaData.GetAnnotations()
+	if annotations == nil {
+		annotations = map[string]string{}
+	}
+
+	value, ok := annotations[key]
+	if !ok {
+		log.Errorf("key %s does not exist", key)
+		return value
+	}
+
+	return value
+}
+
 func insertContainer(dest, add []corev1.Container, path string) (p []operation) {
 	f := len(dest) == 0
 	var val interface{}
@@ -289,6 +309,26 @@ func (wh *WebHookServer) mutation(ar *v1beta1.AdmissionReview) *v1beta1.Admissio
 		log.Infof("Skipping mutation for %s/%s due to policy check", pod.Namespace, pod.Name)
 		return &v1beta1.AdmissionResponse{
 			Allowed: true,
+		}
+	}
+
+	// This sidecar container will be common to consumer and provider
+	// So before proceeding first check the env "SERVICE_PORTS". If its present delete the env
+	for k := range wh.SidecarConfig.Containers {
+		for i := range wh.SidecarConfig.Containers[k].Env {
+			if wh.SidecarConfig.Containers[k].Env[i].Name == servicePorts {
+				wh.SidecarConfig.Containers[k].Env = append(wh.SidecarConfig.Containers[k].Env[0:i], wh.SidecarConfig.Containers[k].Env[i+1:]...)
+			}
+		}
+	}
+
+	//TODO: use service endpoint api to read the service ports
+
+	// If annotation "sidecar.mesher.io/servicePorts" is provided then "SERVICE_PORTS" key will be added to sidecar container.
+	sVal := getAnnotationsForServer(&pod.ObjectMeta, servicePortsAnnotationKey)
+	if sVal != "" {
+		for k := range wh.SidecarConfig.Containers {
+			wh.SidecarConfig.Containers[k].Env = append(wh.SidecarConfig.Containers[k].Env, corev1.EnvVar{Name: servicePorts, Value: sVal})
 		}
 	}
 

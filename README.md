@@ -32,6 +32,14 @@ Output should be:
 
 ```
 bash -x install.sh
+
+kubectl label namespace chassis sidecar-injector=enabled
+[root@mstnode ~]# kubectl get namespace -L sidecar-injector
+NAME          STATUS    AGE       SIDECAR-INJECTOR
+default       Active    18h
+kube-public   Active    18h
+kube-system   Active    18h
+chassis      Active    3m        enabled
 ```
 
 ## Build
@@ -88,7 +96,7 @@ metadata:
   name: client
   namespace: chassis
   annotations:
-    sidecar-injector-mesher.io/inject: "yes"
+    sidecar.mesher.io/inject: "yes"
   labels:
     app: client
     version: 0.0.1

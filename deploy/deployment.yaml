@@ -16,7 +16,7 @@ spec:
           image: gochassis/sidecar-injector:latest
           imagePullPolicy: Always
           args:
-            - -sidecarCfgFile=/etc/webhook/mesher/config/sidecarconfig.yaml
+            - -sidecarCfgFile=/etc/webhook/mesher/config/sidecar_k8s_spec.yaml
             - -tlsCertFile=/etc/webhook/mesher/certs/cert.pem
             - -tlsKeyFile=/etc/webhook/mesher/certs/key.pem
             - -healthCheckInterval=2s
