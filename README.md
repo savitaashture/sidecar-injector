@@ -40,6 +40,20 @@ default       Active    18h
 kube-public   Active    18h
 kube-system   Active    18h
 chassis      Active    3m        enabled
+
+## Verify
+
+cd example/sc
+
+kubectl create -f client.yaml -n chassis
+kubectl create -f server.yaml -n chassis
+
+kubectl get pods -n chassis
+
+NAME                   READY     STATUS    RESTARTS   AGE
+client-mesher          2/2       Running   0          33s
+server-mesher          2/2       Running   0          12s
+
 ```
 
 ## Build
@@ -117,8 +131,8 @@ EOF
 4. Verify sidecar container injected
 ```
 [root@mstnode ~]# kubectl get pods -n chassis
-NAME                                                          READY     STATUS    RESTARTS   AGE
-client                                                        2/2       Running   0          12s
+NAME            READY     STATUS    RESTARTS   AGE
+client          2/2       Running   0          12s
 ```
 
 ## Clean

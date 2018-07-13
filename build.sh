@@ -2,8 +2,9 @@
 set -e
 set -x
 
-gvt restore
+glide install
 rm -rf vendor/k8s.io/apiextensions-apiserver/vendor/k8s.io/apiserver/pkg/util/feature/
+rm -rf vendor/k8s.io/kubernetes/vendor/k8s.io
 
 appname="sidecar-injector"
 

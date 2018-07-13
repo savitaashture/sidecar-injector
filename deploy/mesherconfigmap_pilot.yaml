@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mesher-configmap
+data:
+  chassis.yaml: |
+    ---
+    cse:
+      protocols:
+        http:
+          listenAddress: 127.0.0.1:30101
+      credentials:
+        accessKey:
+        secretKey:
+      service:
+        registry:
+          refeshInterval : 30s
+          registrator:
+            disabled: true
+          contractDiscovery:
+            disabled: true
+          serviceDiscovery:
+            type: pilot
+            address: http://istio-pilot.istio-system:8080
+  router.yaml: |
+    router:
+      infra: pilot
+      address: http://istio-pilot.istio-system:15010
