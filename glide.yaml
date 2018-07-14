@@ -16,13 +16,13 @@ import:
   version: 164ca0fcd787c8d024f4952f23ab4a1293543ed4
   repo: https://github.com/ServiceComb/go-chassis
 - package: k8s.io/api
-  version: kubernetes-1.9.3
+  version: 183f3326a9353bd6d41430fc80f96259331d029c
   repo: https://github.com/kubernetes/api
 - package: k8s.io/apimachinery
-  version: kubernetes-1.9.3
+  version: 5e3c3f9281db3188d57785c1f6afe5eb504ede4f
   repo: https://github.com/kubernetes/apimachinery
 - package: k8s.io/kubernetes
-  version: v1.9.4
+  version: 16c5ba4114bf6443c2ce8c0104ad520dbcece6ce
   repo: https://github.com/kubernetes/kubernetes
 - package: github.com/golang/glog
   version: 23def4e6c14b4da8ac2ed8007337bc5eb5007998
@@ -43,13 +43,13 @@ import:
   version: v1.0.0
   repo: https://github.com/spf13/pflag
 - package: k8s.io/apiextensions-apiserver
-  version: 9f7d28e4a66fed426627a89e57d82602a3d33a12
+  version: c5d255fd1a2d37f2b1794e0fd30e472766e49c2a
   repo: https://github.com/kubernetes/apiextensions-apiserver
 - package: k8s.io/apiserver
-  version: 8e2fdf029740242e7ff156baa1107b07e403e241
+  version: ac57779e08ab911a3896f45b30c02706b47ffeae
   repo: https://github.com/kubernetes/apiserver
 - package: k8s.io/kube-openapi
-  version: 50ae88d24ede7b8bad68e23c805b5d3da5c8abaf
+  version: 0cf8f7e6ed1d2e3d47d02e3b6e559369af24d803
   repo: https://github.com/kubernetes/kube-openapi
 - package: github.com/emicklei/go-restful
   version: v2.6.0
