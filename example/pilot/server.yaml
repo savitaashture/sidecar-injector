@@ -5,6 +5,7 @@ metadata:
   annotations:
     sidecar.mesher.io/inject: "yes"
     sidecar.mesher.io/servicePorts: rest:9999
+    sidecar.mesher.io/discoveryType: "pilot"
   labels:
     app: default
 spec:

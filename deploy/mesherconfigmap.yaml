@@ -9,9 +9,6 @@ data:
       protocols:
         http:
           listenAddress: 127.0.0.1:30101
-      credentials:
-        accessKey:
-        secretKey:
       service:
         registry:
           type: servicecenter
@@ -20,6 +17,20 @@ data:
           refeshInterval : 30s
           watch: true
           tenant: default
+      config:
+        client:
+          #serverUri: http://127.0.0.1:30103
+          type: config_center			# config_center/apollo
+          #serverUri: https://cse.cn-north-1.myhwclouds.com:443
+          refreshMode: 1
+          refreshInterval: 30
+          tenantName:  default
+          autodiscovery: false
+          serviceName: XXXXXX			#Required only for Apollo
+          env: XXXXX				#Required only for Apollo
+          cluster: XXXX				#Required only for Apollo
+          namespace: XXXX				#Required only for Apollo
+          token: XXXXXXXXXXXXX			#Required only for Apollo
     ssl:
       test.consumer.cipherPlugin:
       test.consumer.verifyPeer:
@@ -57,3 +68,20 @@ data:
       contractDiscovery.Consumer.certFile:
       contractDiscovery.Consumer.keyFile:
       contractDiscovery.Consumer.certPwdFile:
+
+      configcenter.Consumer.cipherPlugin: default
+      configcenter.Consumer.verifyPeer: false
+      configcenter.Consumer.cipherSuits: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+      configcenter.Consumer.protocol: TLSv1.2
+      configcenter.Consumer.caFile:
+      configcenter.Consumer.certFile:
+      configcenter.Consumer.keyFile:
+      configcenter.Consumer.certPwdFile:
+  auth.yaml: |
+    ---
+    cse:
+      credentials:
+        accessKey:
+        secretKey:
+        project:
+        akskCustomCipher: default #used to decrypt sk when it is encrypted
