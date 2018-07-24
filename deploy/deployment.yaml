@@ -31,6 +31,9 @@ spec:
             - name: webhook-certs
               mountPath: /etc/webhook/mesher/certs
               readOnly: true
+            - mountPath: /etc/.kube
+              name: kube-config
+              readOnly: true
             - name: webhook-config
               mountPath: /etc/webhook/mesher/config
           livenessProbe:
@@ -54,3 +57,6 @@ spec:
         - name: webhook-config
           configMap:
             name: sidecar-injector-webhook-mesher-configmap
+        - name: kube-config
+          configMap:
+            name: config

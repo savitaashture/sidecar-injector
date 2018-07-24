@@ -39,7 +39,7 @@ NAME          STATUS    AGE       SIDECAR-INJECTOR
 default       Active    18h
 kube-public   Active    18h
 kube-system   Active    18h
-chassis      Active    3m        enabled
+chassis       Active    3m        enabled
 
 ## Verify
 

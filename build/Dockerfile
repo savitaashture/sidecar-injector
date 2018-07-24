@@ -1,5 +1,6 @@
 FROM ubuntu:16.04 
 
-RUN mkdir -p log
+ADD conf .
 ADD sidecar-injector /sidecar-injector
+RUN mkdir -p log
 ENTRYPOINT ["./sidecar-injector"]

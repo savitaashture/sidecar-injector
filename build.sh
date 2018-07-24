@@ -17,6 +17,6 @@ cd $BUILD_PATH
 
 CGO_ENABLED=0 GO_EXTLINK_ENABLED=0 go build --ldflags '-s -w -extldflags "-static"' -a -o $appname
 
-cp $appname build/; cd $BUILD_PATH/build
+cp -r conf/ $appname build/; cd $BUILD_PATH/build
 
 bash -x build_image.sh

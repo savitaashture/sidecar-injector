@@ -4,9 +4,9 @@ metadata:
   name: client-mesher
   annotations:
     sidecar.mesher.io/inject: "yes"
+    sidecar.mesher.io/discoveryType: "sc"
   labels:
-    app: perf
-    version: 0.0.1
+    app: default
 spec:
   containers:
     - name: client
@@ -27,10 +27,10 @@ metadata:
   name: client-mesher
 spec:
   selector:
-    app: perf
+    app: default
   ports:
   - protocol: TCP
-    name: client
+    name: http
     port: 30107
     nodePort: 30107
     targetPort: 9000

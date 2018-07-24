@@ -13,14 +13,20 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/ghodss/yaml"
+	"github.com/go-chassis/sidecar-injector/kubernetes"
 	"github.com/howeyc/fsnotify"
 	"k8s.io/api/admission/v1beta1"
 	admissionregistration "k8s.io/api/admissionregistration/v1beta1"
 	corev1 "k8s.io/api/core/v1"
+	v "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/client-go/informers"
+	kube "k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/kubernetes/pkg/apis/core/v1"
+	"math/rand"
 )
 
 var (
@@ -36,6 +42,10 @@ const (
 	webhookInjectKey          = "sidecar.mesher.io/inject"
 	webhookStatusKey          = "sidecar.mesher.io/status"
 	servicePortsAnnotationKey = "sidecar.mesher.io/servicePorts"
+	registryTypeAnnotationKey = "sidecar.mesher.io/discoveryType"
+	kubernetesConfig          = "/etc/.kube/config"
+	pilotConf                 = "pilot/"
+	scConf                    = "sc/"
 )
 
 const (
@@ -73,11 +83,49 @@ type operation struct {
 	Value     interface{} `json:"value,omitempty"`
 }
 
+var (
+	//ep lister.EndpointsLister
+	sListerSynced, eListerSynced cache.InformerSynced
+	k                            kube.Interface
+)
+
 func init() {
 	_ = corev1.AddToScheme(runtimeScheme)
 	_ = admissionregistration.AddToScheme(runtimeScheme)
 	// https://github.com/kubernetes/kubernetes/issues/57982
 	_ = v1.AddToScheme(runtimeScheme)
+
+	newDiscovery()
+}
+
+func newDiscovery() {
+	k = kubernetes.CreateClient(kubernetesConfig)
+
+	sharedInformer := informers.NewSharedInformerFactory(k, syncPeriod()())
+	eInformer := sharedInformer.Core().V1().Endpoints()
+	sInformer := sharedInformer.Core().V1().Services()
+
+	sInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: addService,
+	})
+
+	eInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: addEndpoint,
+	})
+
+	sListerSynced = sInformer.Informer().HasSynced
+	eListerSynced = eInformer.Informer().HasSynced
+
+	stop := make(chan struct{})
+	sharedInformer.Start(stop)
+	run(stop)
+
+}
+
+func run(stop <-chan struct{}) {
+	if !cache.WaitForCacheSync(stop, sListerSynced, eListerSynced) {
+		return
+	}
 }
 
 //NewWebhook will load the configuration and create a server
@@ -175,7 +223,7 @@ func requiredMutation(metaData *metav1.ObjectMeta) bool {
 	return mRequired
 }
 
-func getAnnotationsForServer(metaData *metav1.ObjectMeta, key string) string {
+func getAnnotations(metaData *metav1.ObjectMeta, key string) string {
 	annotations := metaData.GetAnnotations()
 	if annotations == nil {
 		annotations = map[string]string{}
@@ -312,6 +360,26 @@ func (wh *WebHookServer) mutation(ar *v1beta1.AdmissionReview) *v1beta1.Admissio
 		}
 	}
 
+	annotationValue := getAnnotations(&pod.ObjectMeta, registryTypeAnnotationKey)
+
+	if annotationValue == "pilot" {
+		err := kubernetes.UpdateConfigMap(k, pilotConf, req.Namespace)
+		if err != nil {
+			log.Errorf("Update configmap failed with error: ", err)
+		}
+
+		log.Infof("configmap updated successfully")
+	}
+
+	if annotationValue == "sc" {
+		err := kubernetes.UpdateConfigMap(k, scConf, req.Namespace)
+		if err != nil {
+			log.Errorf("Update configmap failed with error: ", err)
+		}
+
+		log.Infof("configmap updated successfully")
+	}
+
 	// This sidecar container will be common to consumer and provider
 	// So before proceeding first check the env "SERVICE_PORTS". If its present delete the env
 	for k := range wh.SidecarConfig.Containers {
@@ -324,11 +392,12 @@ func (wh *WebHookServer) mutation(ar *v1beta1.AdmissionReview) *v1beta1.Admissio
 
 	//TODO: use service endpoint api to read the service ports
 
+	var c int
 	// If annotation "sidecar.mesher.io/servicePorts" is provided then "SERVICE_PORTS" key will be added to sidecar container.
-	sVal := getAnnotationsForServer(&pod.ObjectMeta, servicePortsAnnotationKey)
+	sVal := getAnnotations(&pod.ObjectMeta, servicePortsAnnotationKey)
 	if sVal != "" {
-		for k := range wh.SidecarConfig.Containers {
-			wh.SidecarConfig.Containers[k].Env = append(wh.SidecarConfig.Containers[k].Env, corev1.EnvVar{Name: servicePorts, Value: sVal})
+		for c = range wh.SidecarConfig.Containers {
+			wh.SidecarConfig.Containers[c].Env = append(wh.SidecarConfig.Containers[c].Env, corev1.EnvVar{Name: servicePorts, Value: sVal})
 		}
 	}
 
@@ -353,6 +422,24 @@ func (wh *WebHookServer) mutation(ar *v1beta1.AdmissionReview) *v1beta1.Admissio
 			return &pt
 		}(),
 	}
+}
+
+func syncPeriod() func() time.Duration {
+	return func() time.Duration {
+		f := rand.Float64() + 1
+		val := time.Duration(float64(1*time.Second.Nanoseconds()) * f)
+		return val
+	}
+}
+
+func addService(obj interface{}) {
+	svc := obj.(*v.Service)
+	log.Infof("Added service:", svc)
+}
+
+func addEndpoint(obj interface{}) {
+	ep := obj.(*v.Endpoints)
+	log.Infof("Added endpoint:", ep)
 }
 
 // Serve method for webhook server
