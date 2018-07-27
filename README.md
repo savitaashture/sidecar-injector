@@ -60,14 +60,19 @@ server-mesher          2/2       Running   0          12s
 
 1. Setup dependency
 
-   The repo use [glide](https://github.com/Masterminds/glide) as the dependency management tool for its Go codebase. Install `gvt` by the following command:
+   The repo use glide as the dependency management tool for its Go codebase. 
+To Install `glide` follow [glide](https://github.com/Masterminds/glide)
 
 2. Build binary, image and push to docker hub
 
 ```
-1. setup a GOPATH
+1. clone sidecar-injector code 
 
-2. bash -x build.sh
+2. setup a GOPATH
+
+3. cd sidecar-injector 
+
+4. bash -x build.sh
 ```
 
 ## Install
@@ -76,7 +81,7 @@ server-mesher          2/2       Running   0          12s
 bash -x install.sh
 ```
 
-## Verify
+## Enable sidecar-injector for namespace on which sidecar pod has been deployed
 
 1. The sidecar injector webhook should be running
 ```
@@ -100,7 +105,9 @@ kube-system   Active    18h
 chassis      Active    3m        enabled
 ```
 
-3. Deploy an app in Kubernetes cluster, take `client` app as an example
+## Deploy example 
+
+1. Deploy an app in Kubernetes cluster, take `client` app as an example
 
 ```
 [root@mstnode ~]# cat <<EOF | kubectl create -f -
@@ -128,7 +135,9 @@ spec:
 EOF
 ```
 
-4. Verify sidecar container injected
+## Verification
+
+1. Verify sidecar container injected
 ```
 [root@mstnode ~]# kubectl get pods -n chassis
 NAME            READY     STATUS    RESTARTS   AGE
