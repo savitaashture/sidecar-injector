@@ -22,11 +22,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/client-go/informers"
 	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/kubernetes/pkg/apis/core/v1"
 	"math/rand"
+	"strconv"
 )
 
 var (
@@ -43,6 +46,7 @@ const (
 	webhookStatusKey          = "sidecar.mesher.io/status"
 	servicePortsAnnotationKey = "sidecar.mesher.io/servicePorts"
 	registryTypeAnnotationKey = "sidecar.mesher.io/discoveryType"
+	apptype                   = "sidecar.mesher.io/serverType"
 	kubernetesConfig          = "/etc/.kube/config"
 	pilotConf                 = "pilot/"
 	scConf                    = "sc/"
@@ -65,6 +69,9 @@ type WebHookParameters struct {
 	Port                int
 	CertFile            string
 	KeyFile             string
+	CAFile              string
+	WebhookConfigName   string
+	WebhookName         string
 	SidecarConfigFile   string
 	HealthCheckInterval time.Duration
 	HealthCheckFile     string
@@ -84,9 +91,9 @@ type operation struct {
 }
 
 var (
-	//ep lister.EndpointsLister
 	sListerSynced, eListerSynced cache.InformerSynced
 	k                            kube.Interface
+	sList                        = make(map[string]int, 0)
 )
 
 func init() {
@@ -385,20 +392,27 @@ func (wh *WebHookServer) mutation(ar *v1beta1.AdmissionReview) *v1beta1.Admissio
 	for k := range wh.SidecarConfig.Containers {
 		for i := range wh.SidecarConfig.Containers[k].Env {
 			if wh.SidecarConfig.Containers[k].Env[i].Name == servicePorts {
-				wh.SidecarConfig.Containers[k].Env = append(wh.SidecarConfig.Containers[k].Env[0:i], wh.SidecarConfig.Containers[k].Env[i+1:]...)
+				wh.SidecarConfig.Containers[k].Env = append(wh.SidecarConfig.Containers[k].Env[0:i], wh.SidecarConfig.Containers[k].Env[i:]...)
 			}
 		}
 	}
 
-	//TODO: use service endpoint api to read the service ports
-
-	var c int
 	// If annotation "sidecar.mesher.io/servicePorts" is provided then "SERVICE_PORTS" key will be added to sidecar container.
 	sVal := getAnnotations(&pod.ObjectMeta, servicePortsAnnotationKey)
 	if sVal != "" {
-		for c = range wh.SidecarConfig.Containers {
+		for c := range wh.SidecarConfig.Containers {
 			wh.SidecarConfig.Containers[c].Env = append(wh.SidecarConfig.Containers[c].Env, corev1.EnvVar{Name: servicePorts, Value: sVal})
 		}
+	} else if annotationValue == "sc" && getAnnotations(&pod.ObjectMeta, apptype) == "yes" {
+		serviceList, err := startSrvWatch(ar, &sList)
+		if err != nil {
+			return &v1beta1.AdmissionResponse{
+				Result: &metav1.Status{
+					Message: err.Error(),
+				},
+			}
+		}
+		wh.getServicePorts(serviceList, ar)
 	}
 
 	// Workaround: https://github.com/kubernetes/kubernetes/issues/57982
@@ -422,6 +436,57 @@ func (wh *WebHookServer) mutation(ar *v1beta1.AdmissionReview) *v1beta1.Admissio
 			return &pt
 		}(),
 	}
+}
+
+func (wh *WebHookServer) getServicePorts(serviceList map[string]int, r *v1beta1.AdmissionReview) {
+	svcList, _ := k.CoreV1().Services(r.Request.Namespace).List(metav1.ListOptions{})
+	for i := range svcList.Items {
+		if svcList.Items[i].Name != "sidecar-injector-webhook-mesher-svc" {
+			if !stringInMap(svcList.Items[i].Name, sList) || len(serviceList) == 2 {
+				for p := range svcList.Items[i].Spec.Ports {
+					for c := range wh.SidecarConfig.Containers {
+						wh.SidecarConfig.Containers[c].Env = append(wh.SidecarConfig.Containers[c].Env,
+							corev1.EnvVar{Name: servicePorts,
+								Value: "rest:" + strconv.Itoa(int(svcList.Items[i].Spec.Ports[p].TargetPort.IntVal))})
+					}
+					sList[svcList.Items[i].Name] = int(svcList.Items[i].Spec.Ports[p].TargetPort.IntVal)
+				}
+			}
+		}
+	}
+}
+
+func stringInMap(str string, list map[string]int) bool {
+	for k := range list {
+		if k == str {
+			return true
+		}
+	}
+	return false
+}
+
+func startSrvWatch(ar *v1beta1.AdmissionReview, sList *map[string]int) (map[string]int, error) {
+	serviceList := make(map[string]int, 0)
+
+	svcList, err := k.CoreV1().Services(ar.Request.Namespace).List(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	for j := range svcList.Items {
+		for p := range svcList.Items[j].Spec.Ports {
+			serviceList[svcList.Items[j].Name] = int(svcList.Items[j].Spec.Ports[p].TargetPort.IntVal)
+		}
+	}
+
+	for k, v := range *sList {
+		value, ok := serviceList[k]
+		if !ok || value != v {
+			delete(*sList, k)
+		}
+	}
+
+	return serviceList, nil
 }
 
 func syncPeriod() func() time.Duration {
@@ -493,6 +558,93 @@ func (wh *WebHookServer) webhookMutation(w http.ResponseWriter, r *http.Request)
 	if _, err := w.Write(resp); err != nil {
 		log.Errorf("Can't write response: %v", err)
 	}
+}
+
+//AddCABundle is used to add/update CABundle in MutatingWebhookConfiguration
+func AddCABundle(p WebHookParameters) error {
+	caPem, err := ioutil.ReadFile(p.CAFile)
+	if err != nil {
+		return err
+	}
+
+	w, err := fsnotify.NewWatcher()
+	if err != nil {
+		return err
+	}
+
+	wDir, _ := filepath.Split(p.CAFile)
+
+	if err = w.Watch(wDir); err != nil {
+		return fmt.Errorf("couldnot watch %v : %v", p.CAFile, err)
+	}
+
+	if err = updateCABundle(k, p.WebhookConfigName, p.WebhookName, caPem); err != nil {
+		log.Errorf("failed to add ca bundle", err)
+		return err
+	}
+
+	go func() {
+		for {
+			select {
+			case <-w.Event:
+				b, err := ioutil.ReadFile(p.CAFile)
+				if err != nil {
+					log.Errorf("failed to read CA bundle %v", err)
+				} else {
+					caPem = b
+					if err = updateCABundle(k, p.WebhookConfigName, p.WebhookName, caPem); err != nil {
+						log.Errorf("failed to add ca bundle", err)
+					}
+				}
+			}
+		}
+	}()
+
+	return nil
+}
+
+func updateCABundle(client kube.Interface, wConfigName, wName string, caBundle []byte) error {
+	config, err := client.AdmissionregistrationV1beta1().MutatingWebhookConfigurations().
+		Get(wConfigName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	originalConf, err := json.Marshal(config)
+	if err != nil {
+		return err
+	}
+
+	exist := false
+	for i, w := range config.Webhooks {
+		if w.Name == wName {
+			config.Webhooks[i].ClientConfig.CABundle = caBundle
+			exist = true
+			break
+		}
+	}
+
+	if !exist {
+		return fmt.Errorf("webhook entry %s not found in %s", wName, wConfigName)
+	}
+
+	modifiedConf, err := json.Marshal(config)
+	if err != nil {
+		return err
+	}
+
+	patch, err := strategicpatch.CreateTwoWayMergePatch(originalConf, modifiedConf,
+		admissionregistration.MutatingWebhookConfiguration{})
+	if err != nil {
+		return err
+	}
+
+	if string(patch) != "{}" {
+		_, err = client.AdmissionregistrationV1beta1().MutatingWebhookConfigurations().
+			Patch(wConfigName, types.StrategicMergePatchType, patch)
+	}
+
+	return err
 }
 
 //Run will run the server

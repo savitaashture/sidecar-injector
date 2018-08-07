@@ -1,6 +1,6 @@
 # sidecar-injector  
 
-To Inject sidecar below are the annotation added to client and server yaml
+To Inject sidecar following are the annotation needs to be added to client and server yaml
 
 ## Required
 
@@ -44,3 +44,26 @@ Where
 9999 ----> Port where server(provider) is running
 rest ----> This is the protocol(it can be rest or grpc)
 ```
+
+## NOTE
+If sidecar.mesher.io/servicePorts annotation has not been provided then
+sidecar-injector code will discover the kubernetes service which has been registered by the server(provider)
+based on the provided annotation
+
+##### "sidecar.mesher.io/serverType"
+
+```
+Allowed value is
+"yes"
+
+example:
+
+sidecar.mesher.io/serverType: "yes"
+```
+
+## Prerequisites for sidecar-injector to discover the service
+1. service has to be deployed first.
+2. Once service has been deployed then deploy pod/deployment.
+3. sidecar.mesher.io/discoveryType has to be "sc"
+
+
