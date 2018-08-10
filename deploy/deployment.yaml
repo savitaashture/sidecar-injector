@@ -17,8 +17,9 @@ spec:
           imagePullPolicy: Always
           args:
             - -sidecarCfgFile=/etc/webhook/mesher/config/sidecar_k8s_spec.yaml
-            - -tlsCertFile=/etc/webhook/mesher/certs/cert.pem
-            - -tlsKeyFile=/etc/webhook/mesher/certs/key.pem
+            - -tlsCertFile=/etc/webhook/mesher/certs/ca-cert.pem
+            - -tlsKeyFile=/etc/webhook/mesher/certs/ca-key.pem
+            - -caFile=/etc/webhook/mesher/certs/root-cert.pem
             - -healthCheckInterval=2s
             - -healthCheckFile=/tmp/healthy
             - -alsologtostderr
