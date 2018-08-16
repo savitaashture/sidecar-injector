@@ -21,12 +21,15 @@ admissionregistration.k8s.io/v1beta1
 OR
 
 ```
-ps -ef | grep kube-apiserver | grep admission-control
+ps -ef | grep kube-apiserver | grep enable-admission-plugins
 ```
 Output should be:
 ```
---admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota
+--enable-admission-plugins=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota
 ```
+
+Follow [admission controller](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#how-do-i-turn-on-an-admission-controller)
+If enable-admission-plugins has not been enabled or it doesnot contain the MutatingAdmissionWebhook and ValidatingAdmissionWebhook 
 
 ## Quick Start
 
