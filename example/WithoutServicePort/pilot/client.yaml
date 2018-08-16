@@ -4,9 +4,9 @@ metadata:
   name: client-mesher
   annotations:
     sidecar.mesher.io/inject: "yes"
-    sidecar.mesher.io/discoveryType: "sc"
+    sidecar.mesher.io/discoveryType: "pilot"
   labels:
-    app: default
+    app: defaultclient
 spec:
   containers:
     - name: client
@@ -14,7 +14,7 @@ spec:
       imagePullPolicy: Always
       env:
         - name: TARGET
-          value: http://server-mesher/
+          value: http://server-mesher:9999/
         - name: http_proxy
           value: http://127.0.0.1:30101/
       ports:
@@ -27,7 +27,7 @@ metadata:
   name: client-mesher
 spec:
   selector:
-    app: default
+    app: defaultclient
   ports:
   - protocol: TCP
     name: http

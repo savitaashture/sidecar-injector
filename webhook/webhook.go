@@ -18,18 +18,13 @@ import (
 	"k8s.io/api/admission/v1beta1"
 	admissionregistration "k8s.io/api/admissionregistration/v1beta1"
 	corev1 "k8s.io/api/core/v1"
-	v "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
-	"k8s.io/client-go/informers"
 	kube "k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/cache"
 	"k8s.io/kubernetes/pkg/apis/core/v1"
-	"math/rand"
-	"strconv"
 )
 
 var (
@@ -46,8 +41,6 @@ const (
 	webhookStatusKey          = "sidecar.mesher.io/status"
 	servicePortsAnnotationKey = "sidecar.mesher.io/servicePorts"
 	registryTypeAnnotationKey = "sidecar.mesher.io/discoveryType"
-	apptype                   = "sidecar.mesher.io/serverType"
-	kubernetesConfig          = "/etc/.kube/config"
 	pilotConf                 = "pilot/"
 	scConf                    = "sc/"
 )
@@ -67,6 +60,7 @@ type WebHookServer struct {
 //WebHookParameters contains Server parameters
 type WebHookParameters struct {
 	Port                int
+	KubeConfig          string
 	CertFile            string
 	KeyFile             string
 	CAFile              string
@@ -91,9 +85,8 @@ type operation struct {
 }
 
 var (
-	sListerSynced, eListerSynced cache.InformerSynced
-	k                            kube.Interface
-	sList                        = make(map[string]int, 0)
+	k     kube.Interface
+	sList = make(map[string]int, 0)
 )
 
 func init() {
@@ -101,42 +94,31 @@ func init() {
 	_ = admissionregistration.AddToScheme(runtimeScheme)
 	// https://github.com/kubernetes/kubernetes/issues/57982
 	_ = v1.AddToScheme(runtimeScheme)
-
-	newDiscovery()
 }
 
-func newDiscovery() {
-	k = kubernetes.CreateClient(kubernetesConfig)
+func getKubeInterface(kubeConfig string) error {
+	var err error
 
-	sharedInformer := informers.NewSharedInformerFactory(k, syncPeriod()())
-	eInformer := sharedInformer.Core().V1().Endpoints()
-	sInformer := sharedInformer.Core().V1().Services()
-
-	sInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: addService,
-	})
-
-	eInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: addEndpoint,
-	})
-
-	sListerSynced = sInformer.Informer().HasSynced
-	eListerSynced = eInformer.Informer().HasSynced
-
-	stop := make(chan struct{})
-	sharedInformer.Start(stop)
-	run(stop)
-
-}
-
-func run(stop <-chan struct{}) {
-	if !cache.WaitForCacheSync(stop, sListerSynced, eListerSynced) {
-		return
+	if kubeConfig == "" {
+		k, err = kubernetes.CreateClient(kubeConfig, "")
+	} else {
+		k, err = kubernetes.CreateClientSet(kubeConfig)
 	}
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 //NewWebhook will load the configuration and create a server
 func NewWebhook(p WebHookParameters) (*WebHookServer, error) {
+	err := getKubeInterface(p.KubeConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	sidecarConfig, err := loadConfig(p.SidecarConfigFile)
 	if err != nil {
 		log.Errorf("Filed to load configuration: %v", err)
@@ -403,16 +385,6 @@ func (wh *WebHookServer) mutation(ar *v1beta1.AdmissionReview) *v1beta1.Admissio
 		for c := range wh.SidecarConfig.Containers {
 			wh.SidecarConfig.Containers[c].Env = append(wh.SidecarConfig.Containers[c].Env, corev1.EnvVar{Name: servicePorts, Value: sVal})
 		}
-	} else if annotationValue == "sc" && getAnnotations(&pod.ObjectMeta, apptype) == "yes" {
-		serviceList, err := startSrvWatch(ar, &sList)
-		if err != nil {
-			return &v1beta1.AdmissionResponse{
-				Result: &metav1.Status{
-					Message: err.Error(),
-				},
-			}
-		}
-		wh.getServicePorts(serviceList, ar)
 	}
 
 	// Workaround: https://github.com/kubernetes/kubernetes/issues/57982
@@ -436,75 +408,6 @@ func (wh *WebHookServer) mutation(ar *v1beta1.AdmissionReview) *v1beta1.Admissio
 			return &pt
 		}(),
 	}
-}
-
-func (wh *WebHookServer) getServicePorts(serviceList map[string]int, r *v1beta1.AdmissionReview) {
-	svcList, _ := k.CoreV1().Services(r.Request.Namespace).List(metav1.ListOptions{})
-	for i := range svcList.Items {
-		if svcList.Items[i].Name != "sidecar-injector-webhook-mesher-svc" {
-			if !stringInMap(svcList.Items[i].Name, sList) || len(serviceList) == 2 {
-				for p := range svcList.Items[i].Spec.Ports {
-					for c := range wh.SidecarConfig.Containers {
-						wh.SidecarConfig.Containers[c].Env = append(wh.SidecarConfig.Containers[c].Env,
-							corev1.EnvVar{Name: servicePorts,
-								Value: "rest:" + strconv.Itoa(int(svcList.Items[i].Spec.Ports[p].TargetPort.IntVal))})
-					}
-					sList[svcList.Items[i].Name] = int(svcList.Items[i].Spec.Ports[p].TargetPort.IntVal)
-				}
-			}
-		}
-	}
-}
-
-func stringInMap(str string, list map[string]int) bool {
-	for k := range list {
-		if k == str {
-			return true
-		}
-	}
-	return false
-}
-
-func startSrvWatch(ar *v1beta1.AdmissionReview, sList *map[string]int) (map[string]int, error) {
-	serviceList := make(map[string]int, 0)
-
-	svcList, err := k.CoreV1().Services(ar.Request.Namespace).List(metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	for j := range svcList.Items {
-		for p := range svcList.Items[j].Spec.Ports {
-			serviceList[svcList.Items[j].Name] = int(svcList.Items[j].Spec.Ports[p].TargetPort.IntVal)
-		}
-	}
-
-	for k, v := range *sList {
-		value, ok := serviceList[k]
-		if !ok || value != v {
-			delete(*sList, k)
-		}
-	}
-
-	return serviceList, nil
-}
-
-func syncPeriod() func() time.Duration {
-	return func() time.Duration {
-		f := rand.Float64() + 1
-		val := time.Duration(float64(1*time.Second.Nanoseconds()) * f)
-		return val
-	}
-}
-
-func addService(obj interface{}) {
-	svc := obj.(*v.Service)
-	log.Infof("Added service:", svc)
-}
-
-func addEndpoint(obj interface{}) {
-	ep := obj.(*v.Endpoints)
-	log.Infof("Added endpoint:", ep)
 }
 
 // Serve method for webhook server

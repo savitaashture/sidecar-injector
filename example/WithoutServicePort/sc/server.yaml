@@ -4,8 +4,7 @@ metadata:
   name: server-mesher
   annotations:
     sidecar.mesher.io/inject: "yes"
-    sidecar.mesher.io/servicePorts: rest:9999
-    sidecar.mesher.io/discoveryType: "pilot"
+    sidecar.mesher.io/discoveryType: "sc"
   labels:
     app: default
 spec:
@@ -27,7 +26,4 @@ spec:
   ports:
   - protocol: TCP
     name: http
-    port: 30104
-    nodePort: 30104
-    targetPort: 9999
-  type: NodePort
+    port: 9999

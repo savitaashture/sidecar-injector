@@ -11,7 +11,7 @@ webhooks:
         name: sidecar-injector-webhook-mesher-svc
         namespace: chassis
         path: "/webhookmutation"
-      caBundle: ${CA_BUNDLE}
+      caBundle: ""
     rules:
       - operations: [ "CREATE" ]
         apiGroups: [""]
