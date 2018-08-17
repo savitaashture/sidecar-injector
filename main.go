@@ -19,6 +19,7 @@ func main() {
 
 	// get command line parameters
 	flag.IntVar(&parms.Port, "port", 443, "Webhook server port.")
+	flag.StringVar(&parms.KubeConfig, "kubeconfigfile", "", "Specifies path to kubeconfig file.")
 	flag.StringVar(&parms.CertFile, "tlsCertFile", "/etc/webhook/mesher/certs/ca-cert.pem", "File containing the x509 Certificate for HTTPS.")
 	flag.StringVar(&parms.KeyFile, "tlsKeyFile", "/etc/webhook/mesher/certs/ca-key.pem", "File containing the x509 private key to --tlsCertFile.")
 	flag.StringVar(&parms.CAFile, "caFile", "/etc/webhook/mesher/certs/root-cert.pem", "File containing the x509 Certificate key.")
@@ -32,6 +33,7 @@ func main() {
 	wh, err := webhook.NewWebhook(parms)
 	if err != nil {
 		log.Errorf("failed to create webhook injection", err)
+		os.Exit(1)
 	}
 
 	if err = webhook.AddCABundle(parms); err != nil {

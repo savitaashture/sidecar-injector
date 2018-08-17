@@ -16,3 +16,9 @@ cse:
       serviceDiscovery:
         type: pilot
         address: http://istio-pilot.istio-system:8080
+  handler:
+    chain:
+      Consumer:
+        outgoing: router, ratelimiter-consumer, bizkeeper-consumer, loadbalance, port-selector, transport
+      Provider:
+        incoming:  #provider handlers
