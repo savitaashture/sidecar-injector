@@ -40,7 +40,7 @@ func buildClientConf(kubeconfig, context string) (*rest.Config, error) {
 	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides).ClientConfig()
 }
 
-// CreateClient function is used to create a client for k8s and returns interface
+// CreateClientSet function is used to create a client for k8s and returns interface
 func CreateClientSet(kubeconfig string) (kubernetes.Interface, error) {
 	restConfig, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
